@@ -14,10 +14,8 @@ English draughts (checkers) plugin for [KOReader](https://koreader.rocks). Play 
 
 ## Installation
 
-1. Download or clone this repository as a folder named `checkers.koplugin`.
-2. Copy the folder into KOReader's plugins directory on your device:
-   - Kindle / Kobo (USB): `<device>/koreader/plugins/checkers.koplugin/`
-   - Linux desktop: `~/.config/koreader/plugins/checkers.koplugin/`
+1. Download the release or clone this repository as a folder named `checkers.koplugin`.
+2. Copy the folder into `/koreader/plugins` directory on your device
 3. Restart KOReader (or reload plugins via **Settings → Plugin settings → Reload plugins**).
 
 The plugin will appear under **Tools → Checkers** in the KOReader menu.
@@ -59,12 +57,18 @@ You can reopen the settings at any time using the **⚙ gear icon** in the top-l
 ## Rules summary (English draughts)
 
 - Black moves first (down the board), White moves up.
-- Men move diagonally forward one square.
+- Pieces move diagonally forward one square.
 - Captures jump over an adjacent enemy to the empty square beyond; captures are **forced**.
 - A chain of captures in one turn is a **multi-jump** — you must continue as long as captures are available.
-- A man reaching the far rank is **crowned king** and may move or capture in any diagonal direction.
+- A piece reaching the far rank is **crowned king** and may move or capture in any diagonal direction.
 - The game ends when a player has no legal moves, or after **40 consecutive moves without a capture** (draw).
+
+## Acknowledgements
+
+The rule book is based on the [checkers](https://github.com/ImparaAI/checkers) python library.
+
+The AI is based on *njmarko*'s [alpha-beta-pruning-minmax-checkers](https://github.com/njmarko/alpha-beta-pruning-minmax-checkers) engine
 
 ## License
 
-MIT
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.
