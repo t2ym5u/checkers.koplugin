@@ -38,10 +38,10 @@ end
 
 -- ── Widget ────────────────────────────────────────────────────────────────────
 
-local SettingsWidget = {}
-SettingsWidget.__index = SettingsWidget
+local CheckersSettingsWidget = {}
+CheckersSettingsWidget.__index = CheckersSettingsWidget
 
-function SettingsWidget:new(opts)
+function CheckersSettingsWidget:new(opts)
     assert(opts.parent,   "parent is required")
     assert(opts.onApply,  "onApply callback is required")
     return setmetatable({
@@ -52,12 +52,12 @@ function SettingsWidget:new(opts)
             human    = { [1] = opts.parent.human[1], [2] = opts.parent.human[2] },
             ai_depth = opts.parent.ai_depth,
         },
-    }, SettingsWidget)
+    }, CheckersSettingsWidget)
 end
 
 -- ── Section builders ──────────────────────────────────────────────────────────
 
-function SettingsWidget:buildPlayerSection()
+function CheckersSettingsWidget:buildPlayerSection()
     local w = self.dialog.element_width
 
     local function makeRow(player, label_text)
@@ -90,7 +90,7 @@ function SettingsWidget:buildPlayerSection()
     }
 end
 
-function SettingsWidget:buildDifficultySection()
+function CheckersSettingsWidget:buildDifficultySection()
     local w   = self.dialog.element_width
     local pos = depth_to_pos(self.changes.ai_depth)
 
@@ -121,7 +121,7 @@ function SettingsWidget:buildDifficultySection()
     }
 end
 
-function SettingsWidget:assembleContent()
+function CheckersSettingsWidget:assembleContent()
     local D = self.dialog
     local content = FrameContainer:new{
         radius     = Size.radius.window,
@@ -166,7 +166,7 @@ end
 
 -- ── Public ────────────────────────────────────────────────────────────────────
 
-function SettingsWidget:show()
+function CheckersSettingsWidget:show()
     local dlg = InputDialog:new{
         title            = _("New Game"),
         dismiss_callback = function() UIManager:close(self.dialog) end,
@@ -185,9 +185,9 @@ function SettingsWidget:show()
     UIManager:show(dlg)
 end
 
-function SettingsWidget:applyAndClose()
+function CheckersSettingsWidget:applyAndClose()
     self.onApply(self.changes)
     UIManager:close(self.dialog)
 end
 
-return SettingsWidget
+return CheckersSettingsWidget

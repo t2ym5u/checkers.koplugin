@@ -17,10 +17,10 @@ local TitleBarWidget  = require("ui/widget/titlebar")
 local ButtonWidget    = require("ui/widget/button")
 local ConfirmBox      = require("ui/widget/confirmbox")
 
-local Game           = require("game")
-local CheckersBoard  = require("board")
-local AI             = require("ai")
-local SettingsWidget = require("settingswidget")
+local CheckersGame           = require("game")
+local CheckersBoard          = require("board")
+local CheckersAI             = require("ai")
+local CheckersSettingsWidget = require("settingswidget")
 local _              = require("gettext")
 
 -- ── Icon installation ─────────────────────────────────────────────────────────
@@ -128,7 +128,7 @@ end
 -- ── Settings dialog ───────────────────────────────────────────────────────────
 
 function Checkers:openSettings()
-    SettingsWidget:new{
+    CheckersSettingsWidget:new{
         parent  = self,
         onApply = function(changes)
             self.human[1] = changes.human[1]
@@ -146,7 +146,7 @@ function Checkers:startGame()
     if UIManager.isWidgetShown and UIManager:isWidgetShown(self) then
         UIManager:close(self)
     end
-    self.game = Game.new()
+    self.game = CheckersGame.new()
     self:buildLayout()
     self.board:updateBoard()
     self:updateStatus()
@@ -318,7 +318,7 @@ function Checkers:doAIMove()
     if self.human[self.game:whose_turn()] then return end
 
     repeat
-        local m = AI.best_move(self.game, self.ai_depth)
+        local m = CheckersAI.best_move(self.game, self.ai_depth)
         if not m then break end
         self.game:move(m[1], m[2])
     until not self.game:is_mid_jump()
