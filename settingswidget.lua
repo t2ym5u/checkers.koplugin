@@ -169,8 +169,11 @@ end
 function SettingsWidget:show()
     local dlg = InputDialog:new{
         title            = _("New Game"),
-        save_callback    = function() self:applyAndClose() end,
         dismiss_callback = function() UIManager:close(self.dialog) end,
+        buttons          = {{
+            { text = _("Cancel"), callback = function() UIManager:close(self.dialog) end },
+            { text = _("Start"),  callback = function() self:applyAndClose() end },
+        }},
     }
     dlg.element_width = math.floor(dlg.width * 0.8)
     self.dialog = dlg
@@ -178,11 +181,6 @@ function SettingsWidget:show()
     self:buildPlayerSection()
     self:buildDifficultySection()
     self:assembleContent()
-
-    -- Enable the Save button immediately (no text-edit detection needed).
-    if dlg._buttons_edit_callback then
-        dlg:_buttons_edit_callback(true)
-    end
 
     UIManager:show(dlg)
 end

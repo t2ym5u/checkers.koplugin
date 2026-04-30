@@ -197,7 +197,7 @@ function Checkers:buildLayout()
         self:_toolbar_btn("chevron.left", btn_w, toolbar_h,
             function() self:doUndo() end),
         self:_toolbar_btn("plus",         btn_w, toolbar_h,
-            function() self:askNewGame() end),
+            function() self:openSettings() end),
     }
 
     self[1] = VerticalGroup:new{
@@ -231,13 +231,10 @@ function Checkers:createStatusBar()
         fullscreen              = true,
         title                   = _("Checkers"),
         subtitle                = self:_turn_text(),
-        left_icon               = "appbar.settings",
-        left_icon_size_ratio    = 1.0,
         right_icon              = "exit",
         right_icon_size_ratio   = 1.0,
         title_top_padding       = Screen:scaleBySize(2),
         bottom_v_padding        = Screen:scaleBySize(8),
-        left_icon_tap_callback  = function() self:openSettings() end,
         right_icon_tap_callback = function()
             UIManager:show(ConfirmBox:new{
                 text        = _("Exit Checkers?"),
