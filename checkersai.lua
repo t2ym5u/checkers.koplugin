@@ -4,10 +4,10 @@
 --   back-row bridge (back).  Search structure unchanged.
 --
 -- Public API:
---   AI.best_move(game, depth)  →  {from_pos, to_pos} or nil
+--   CheckersAI.best_move(game, depth)  →  {from_pos, to_pos} or nil
 
-local AI = {}
-AI.__index = AI
+local CheckersAI = {}
+CheckersAI.__index = CheckersAI
 
 local INF = math.huge
 
@@ -148,7 +148,7 @@ end
 
 -- Returns the best {from_pos, to_pos} for the current player, or nil.
 -- depth defaults to 5 (good balance of speed vs strength on e-readers).
-function AI.best_move(game, depth)
+function CheckersAI.best_move(game, depth)
     depth = depth or 5
     local ai_player = game:whose_turn()
     local moves = game:get_possible_moves()
@@ -172,4 +172,4 @@ function AI.best_move(game, depth)
     return best_move
 end
 
-return AI
+return CheckersAI

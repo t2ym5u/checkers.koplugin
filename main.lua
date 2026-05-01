@@ -12,15 +12,16 @@ local util        = require("util")
 
 local FrameContainer  = require("ui/widget/container/framecontainer")
 local VerticalGroup   = require("ui/widget/verticalgroup")
+local VerticalSpan    = require("ui/widget/verticalspan")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local TitleBarWidget  = require("ui/widget/titlebar")
 local ButtonWidget    = require("ui/widget/button")
 local ConfirmBox      = require("ui/widget/confirmbox")
 
-local Game           = require("game")
-local CheckersBoard  = require("board")
-local AI             = require("ai")
-local SettingsWidget = require("settingswidget")
+local CheckersGame           = require("checkersgame")
+local CheckersBoard          = require("checkersboard")
+local CheckersAI             = require("checkersai")
+local CheckersSettingsWidget = require("checkerssettings")
 local _              = require("gettext")
 
 -- ── Icon installation ─────────────────────────────────────────────────────────
@@ -128,7 +129,7 @@ end
 -- ── Settings dialog ───────────────────────────────────────────────────────────
 
 function Checkers:openSettings()
-    SettingsWidget:new{
+    CheckersSettingsWidget:new{
         parent  = self,
         onApply = function(changes)
             self.human[1] = changes.human[1]
@@ -146,7 +147,7 @@ function Checkers:startGame()
     if UIManager.isWidgetShown and UIManager:isWidgetShown(self) then
         UIManager:close(self)
     end
-    self.game = Game.new()
+    self.game = CheckersGame.new()
     self:buildLayout()
     self.board:updateBoard()
     self:updateStatus()
@@ -200,13 +201,16 @@ function Checkers:buildLayout()
             function() self:openSettings() end),
     }
 
+    local content_h = status_h + board_size + toolbar_h
+    local gap       = self.full_height - content_h
+
     self[1] = VerticalGroup:new{
         align  = "center",
         width  = self.full_width,
-        height = self.full_height,
         status_bar,
         self.board,
         toolbar,
+        gap > 0 and VerticalSpan:new{ width = self.full_width, height = gap } or nil,
     }
     self.status_bar = status_bar
 end
@@ -318,7 +322,7 @@ function Checkers:doAIMove()
     if self.human[self.game:whose_turn()] then return end
 
     repeat
-        local m = AI.best_move(self.game, self.ai_depth)
+        local m = CheckersAI.best_move(self.game, self.ai_depth)
         if not m then break end
         self.game:move(m[1], m[2])
     until not self.game:is_mid_jump()

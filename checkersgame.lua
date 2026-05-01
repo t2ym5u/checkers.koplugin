@@ -4,8 +4,8 @@
 -- Player 2 (white) starts at positions 21-32 (bottom), moves up.
 -- Positions 1-32 number the 32 dark squares row-by-row, 4 per row.
 
-local Game = {}
-Game.__index = Game
+local CheckersGame = {}
+CheckersGame.__index = CheckersGame
 
 -- ── Piece helpers ────────────────────────────────────────────────────────────
 
@@ -353,10 +353,10 @@ local function new_board()
     return board
 end
 
--- ── Public Game API ──────────────────────────────────────────────────────────
+-- ── Public API ───────────────────────────────────────────────────────────────
 
-function Game.new()
-    local self = setmetatable({}, Game)
+function CheckersGame.new()
+    local self = setmetatable({}, CheckersGame)
     self.board                         = new_board()
     self.history                       = {}
     self.consecutive_noncapture_limit  = 40
@@ -364,12 +364,12 @@ function Game.new()
     return self
 end
 
-function Game:get_possible_moves()
+function CheckersGame:get_possible_moves()
     return possible_moves(self.board)
 end
 
 -- Valid moves for one specific piece (respects forced-capture rule).
-function Game:get_moves_for_piece(position)
+function CheckersGame:get_moves_for_piece(position)
     local all   = possible_moves(self.board)
     local out   = {}
     for _, m in ipairs(all) do
@@ -379,7 +379,7 @@ function Game:get_moves_for_piece(position)
 end
 
 -- Apply move {from_pos, to_pos}. Returns true on success.
-function Game:move(from_pos, to_pos)
+function CheckersGame:move(from_pos, to_pos)
     local move = {from_pos, to_pos}
     if not move_in_list(move, possible_moves(self.board)) then return false end
     self.history[#self.history+1] = take_snapshot(self.board, self.moves_since_last_capture)
@@ -395,7 +395,7 @@ function Game:move(from_pos, to_pos)
 end
 
 -- Undo one full turn (collapses multi-jump sub-moves into one undo step).
-function Game:undo()
+function CheckersGame:undo()
     if #self.history == 0 or self:is_mid_jump() then return false end
     repeat
         local snap = table.remove(self.history)
@@ -405,45 +405,45 @@ function Game:undo()
     return true
 end
 
-function Game:is_over()
+function CheckersGame:is_over()
     return self.moves_since_last_capture >= self.consecutive_noncapture_limit
         or #possible_moves(self.board) == 0
 end
 
 -- Returns 1 or 2 if that player wins, nil if game is ongoing.
-function Game:get_winner()
+function CheckersGame:get_winner()
     if #possible_moves(self.board) == 0 then
         return self.board.player_turn == 1 and 2 or 1
     end
     return nil
 end
 
-function Game:whose_turn()
+function CheckersGame:whose_turn()
     return self.board.player_turn
 end
 
-function Game:get_piece_at(position)
+function CheckersGame:get_piece_at(position)
     local p = self.board.searcher.position_pieces[position]
     if p then return {player = p.player, king = p.king} end
     return nil
 end
 
-function Game:is_mid_jump()
+function CheckersGame:is_mid_jump()
     return self.board.piece_requiring_further_capture_moves ~= nil
 end
 
-function Game:get_mid_jump_piece_pos()
+function CheckersGame:get_mid_jump_piece_pos()
     local p = self.board.piece_requiring_further_capture_moves
     return p and p.position or nil
 end
 
-function Game:can_undo()
+function CheckersGame:can_undo()
     return #self.history > 0 and not self:is_mid_jump()
 end
 
 -- Clone the game state for AI search (no history needed in the clone).
-function Game:clone()
-    local c = setmetatable({}, Game)
+function CheckersGame:clone()
+    local c = setmetatable({}, CheckersGame)
 
     local sb = self.board
     local prcfcm_pos = sb.piece_requiring_further_capture_moves
@@ -490,4 +490,4 @@ function Game:clone()
     return c
 end
 
-return Game
+return CheckersGame
