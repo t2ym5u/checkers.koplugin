@@ -3,7 +3,7 @@
 
 local Geom        = require("ui/geometry")
 local Blitbuffer  = require("ffi/blitbuffer")
-local ButtonTable = require("buttontable")
+local ButtonTable = require("checkersbuttontable")
 local Device      = require("device")
 local Screen      = Device.screen
 local UIManager   = require("ui/uimanager")
@@ -100,7 +100,7 @@ end
 
 -- ── Board widget ─────────────────────────────────────────────────────────────
 
-local Board = FrameContainer:extend{
+local CheckersBoard = FrameContainer:extend{
     game         = nil,
     width        = 300,
     height       = 300,
@@ -114,7 +114,7 @@ local Board = FrameContainer:extend{
     _icon_h      = 0,
 }
 
-function Board:getSize()
+function CheckersBoard:getSize()
     -- Set the padding fields that FrameContainer:paintTo() reads after calling getSize().
     -- Our override skips FrameContainer:getSize() so we must set them manually.
     self._padding_top    = self.padding_top    or self.padding
@@ -124,7 +124,7 @@ function Board:getSize()
     return Geom:new{ x=0, y=0, w=self.width, h=self.height }
 end
 
-function Board:init()
+function CheckersBoard:init()
     if not self.game then error("CheckersBoard: must be initialised with a game") end
 
     local pad    = Screen:scaleBySize(8)
@@ -172,7 +172,7 @@ function Board:init()
     }
 end
 
-function Board:_make_button_spec(rank, file)
+function CheckersBoard:_make_button_spec(rank, file)
     local is_dark = (rank + file) % 2 == 1
     local spec = {
         id          = sq_id(rank, file),
@@ -191,7 +191,7 @@ function Board:_make_button_spec(rank, file)
     return spec
 end
 
-function Board:_apply_square_colors()
+function CheckersBoard:_apply_square_colors()
     for rank = 0, BOARD_SIZE - 1 do
         for file = 0, BOARD_SIZE - 1 do
             local btn   = self.btable:getButtonById(sq_id(rank, file))
@@ -206,7 +206,7 @@ end
 
 -- ── Click handling ────────────────────────────────────────────────────────────
 
-function Board:handleClick(rank, file)
+function CheckersBoard:handleClick(rank, file)
     local pos = visual_to_pos[rank] and visual_to_pos[rank][file]
     if not pos then return end
 
@@ -250,13 +250,13 @@ function Board:handleClick(rank, file)
     end
 end
 
-function Board:_select(pos)
+function CheckersBoard:_select(pos)
     self.selected_pos = pos
     self:_mark_selected(pos)
     self:_mark_hints(pos)
 end
 
-function Board:_clear_selection()
+function CheckersBoard:_clear_selection()
     if self.selected_pos then
         self:_unmark_selected(self.selected_pos)
         self.selected_pos = nil
@@ -264,7 +264,7 @@ function Board:_clear_selection()
     self:clearValidMoves()
 end
 
-function Board:_execute_move(from_pos, to_pos)
+function CheckersBoard:_execute_move(from_pos, to_pos)
     self:_clear_selection()
     local ok = self.game:move(from_pos, to_pos)
     if not ok then return end
@@ -279,12 +279,12 @@ end
 
 -- ── Visual updates ────────────────────────────────────────────────────────────
 
-function Board:updateBoard()
+function CheckersBoard:updateBoard()
     for pos = 1, 32 do self:updateSquare(pos) end
     UIManager:setDirty(self, "ui")
 end
 
-function Board:updateSquare(pos)
+function CheckersBoard:updateSquare(pos)
     local v = pos_to_visual[pos]; if not v then return end
     local piece = self.game:get_piece_at(pos)
     local btn   = self.btable:getButtonById(sq_id(v.rank, v.file))
@@ -304,21 +304,21 @@ function Board:updateSquare(pos)
     btn.frame.border_color = color
 end
 
-function Board:_mark_selected(pos)
+function CheckersBoard:_mark_selected(pos)
     local v = pos_to_visual[pos]; if not v then return end
     local btn = self.btable:getButtonById(sq_id(v.rank, v.file))
     overlay_icon(btn, "selected", "checkers/select", self._cell, self._icon_h)
     UIManager:setDirty("all", "ui")
 end
 
-function Board:_unmark_selected(pos)
+function CheckersBoard:_unmark_selected(pos)
     local v = pos_to_visual[pos]; if not v then return end
     local btn = self.btable:getButtonById(sq_id(v.rank, v.file))
     clear_overlay(btn, "selected")
     UIManager:setDirty("all", "ui")
 end
 
-function Board:_mark_hints(pos)
+function CheckersBoard:_mark_hints(pos)
     self.hint_positions = {}
     local moves = self.game:get_moves_for_piece(pos)
     for _, m in ipairs(moves) do
@@ -332,7 +332,7 @@ function Board:_mark_hints(pos)
     UIManager:setDirty("all", "ui")
 end
 
-function Board:clearValidMoves()
+function CheckersBoard:clearValidMoves()
     if not self.hint_positions then return end
     for _, tp in ipairs(self.hint_positions) do
         local v = pos_to_visual[tp]; if not v then goto continue end
@@ -344,4 +344,4 @@ function Board:clearValidMoves()
     UIManager:setDirty("all", "ui")
 end
 
-return Board
+return CheckersBoard
