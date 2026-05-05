@@ -159,7 +159,7 @@ function Checkers:startGame()
 end
 
 function Checkers:resetGame()
-    self.game               = Game.new()
+    self.game               = CheckersGame.new()
     self.board.game         = self.game
     self.board.selected_pos = nil
     self.board.hint_positions = {}

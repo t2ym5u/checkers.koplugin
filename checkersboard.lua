@@ -26,15 +26,17 @@ local _pos_layout = {}   -- _pos_layout[row][col] = position 1-32
 local pos_to_visual = {} -- pos_to_visual[pos]  = {rank=r, file=f}
 local visual_to_pos = {} -- visual_to_pos[rank][file] = pos (nil for light)
 do
+    for vr = 0, BOARD_SIZE - 1 do visual_to_pos[vr] = {} end
     local p = 1
     for row = 0, BOARD_SIZE - 1 do
         _pos_layout[row] = {}
-        visual_to_pos[row] = {}
         for col = 0, BOARD_W - 1 do
             _pos_layout[row][col] = p
-            local f = (row % 2 == 0) and (col * 2 + 1) or (col * 2)
-            pos_to_visual[p]        = {rank = row, file = f}
-            visual_to_pos[row][f]   = p
+            local f     = (row % 2 == 0) and (col * 2 + 1) or (col * 2)
+            local vrank = BOARD_SIZE - 1 - row
+            local vfile = BOARD_SIZE - 1 - f
+            pos_to_visual[p]           = {rank = vrank, file = vfile}
+            visual_to_pos[vrank][vfile] = p
             p = p + 1
         end
     end
