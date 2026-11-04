@@ -1,7 +1,6 @@
 local _ = require("gettext")
 return {
-    name        = "checkers",
+    version     = "1.3.0",
     fullname    = _("Checkers"),
-    description = _([[English draughts (checkers) — human vs human.]]),
-    version     = "1.2.0",
+    description = _("English draughts (checkers), against the AI or a friend."),
 }

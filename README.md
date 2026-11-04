@@ -1,78 +1,77 @@
-# Checkers for KOReader
+# checkers.koplugin
 
-English draughts (checkers) plugin for [KOReader](https://koreader.rocks). Play human vs human or against a built-in AI opponent.
+Checkers (English draughts, « Dames ») for
+[KOReader](https://github.com/koreader/koreader): play against the AI or a
+friend on the same device.
 
-![Checkers game with settings dialog open](checkers_screenshot.png)
+## Screenshot
+
+![Screenshot](images/checkers.png)
+
+## Rules
+
+Each player has 12 pieces on the dark squares; Black plays first.
+
+- A piece moves one square diagonally **forward** onto an empty dark square.
+- It captures by **jumping** over an adjacent opponent piece onto the empty
+  square just beyond it. Capturing is **compulsory**, but when several
+  captures are possible you choose which one.
+- After a jump, if the same piece can jump again it must keep jumping in the
+  same turn (**multi-jump**).
+- A piece reaching the far row is **crowned king** and may then move and
+  capture one square diagonally backwards too. A piece crowned during a
+  capture ends its turn there.
+
+You win when your opponent has no pieces left or cannot move. After 40 moves
+in a row without a capture (20 each), the game is drawn.
 
 ## Features
 
-- **Standard English draughts rules** — forced captures, multi-jump, king promotion, 40-move draw rule
-- **AI opponent** — alpha-beta search with four difficulty levels (Easy / Medium / Hard / Expert)
-- **Flexible modes** — each side (Black, White) can independently be Human or AI
-- **Undo** — steps back over the AI's reply so you always return to your own turn
-- **Persistent settings** — mode and difficulty are remembered between sessions
+- **1 player vs AI** (easy / medium / hard / expert) or **2 players** on one
+  device
+- **Play as Black or White** against the AI — your pieces are always at the
+  bottom
+- **Move help** — the selected piece is ringed and the squares it can reach
+  are dotted; only legal moves are offered, so a forced capture is enforced
+- **Last move shown** — the squares the last piece went through are shaded,
+  multi-jumps included
+- **Undo** — against the AI, takes back the AI's reply and your move; a
+  multi-jump is undone as a whole
+- **Auto-save** — the game, with its undo history, is restored on next launch
+
+## The AI
+
+Iterative-deepening negamax with alpha-beta pruning on a compact board, with
+a transposition table and killer/history move ordering. The evaluation follows
+Arthur Samuel's checkers features (material, advancement, centre control,
+back-row bridge). Each level searches up to a maximum depth (3, 5, 7, 9) within
+a thinking-time budget (0.5 s, 1 s, 2 s, 2.5 s of CPU time on a Kobo-class
+reader), whichever comes first.
 
 ## Installation
 
-1. Download the release or clone this repository as a folder named `checkers.koplugin`.
-2. Copy the folder into `/koreader/plugins` directory on your device
-3. Restart KOReader (or reload plugins via **Settings → Plugin settings → Reload plugins**).
+1. Download `checkers.koplugin.zip` from the [latest release](../../releases/latest).
+2. Extract into the `plugins/` folder of your KOReader data directory.
+3. Restart KOReader.
+4. Open the menu → **Tools** → **Games** → **Board games** → **Checkers**.
 
-The plugin will appear under **Tools → Checkers** in the KOReader menu.
+## Controls
 
-> Icons are automatically installed to `~/.config/koreader/icons/checkers/` on the first run.
+| Action | How |
+|--------|-----|
+| Move a piece | Tap it, then tap a dotted square |
+| Continue a multi-jump | Tap the next dotted square (the piece stays selected) |
+| Take back a move | Tap **Undo** |
+| New game, difficulty, players, colour, rules | Title-bar menu |
 
-## Usage
+## Credits
 
-### Starting a game
-
-Open **Tools → Checkers** to open the New Game dialog. Choose which side each player is (Human or AI) and the difficulty, then tap **Save**. The game starts immediately.
-
-You can reopen the settings at any time using the **⚙ gear icon** in the top-left corner of the board.
-
-### Playing
-
-- **Tap a piece** to select it — valid destination squares are shown as dots.
-- **Tap a destination** to move. If a capture is available, it is forced (the dots only show legal moves).
-- When a multi-jump is possible after a capture, the piece stays selected and you must continue jumping.
-
-### Toolbar buttons
-
-| Button | Action |
-|--------|--------|
-| **‹** (bottom-left) | Undo — steps back over the AI's reply |
-| **+** (bottom-right) | New game (asks for confirmation) |
-| **⚙** (top-left) | Open settings / change mode or difficulty |
-| **✕** (top-right) | Exit Checkers |
-
-### Difficulty levels
-
-| Level  | Max search depth | Notes |
-|--------|-------------|-------|
-| Easy   | 3 | Misses short-term threats |
-| Medium | 5 | Plays solid, misses some tactics |
-| Hard   | 7 | Strong club-level play |
-| Expert | 9 | Strongest; thinks up to ~2.5 s per move |
-
-The search deepens iteratively and stops at the level's depth or its time
-budget (Easy 0.5 s, Medium 1 s, Hard 2 s, Expert 2.5 s on a Kobo-class device),
-whichever comes first.
-
-## Rules summary (English draughts)
-
-- Black moves first (down the board), White moves up.
-- Pieces move diagonally forward one square.
-- Captures jump over an adjacent enemy to the empty square beyond; captures are **forced**.
-- A chain of captures in one turn is a **multi-jump** — you must continue as long as captures are available.
-- A piece reaching the far rank is **crowned king** and may move or capture in any diagonal direction.
-- The game ends when a player has no legal moves, or after **40 consecutive moves without a capture** (draw).
-
-## Acknowledgements
-
-The rule book is based on the [checkers](https://github.com/ImparaAI/checkers) python library.
-
-The AI is based on *njmarko*'s [alpha-beta-pruning-minmax-checkers](https://github.com/njmarko/alpha-beta-pruning-minmax-checkers) engine
+Originally written by [kbarni](https://github.com/kbarni/checkers.koplugin);
+this repository is a fork. The rules engine is based on the
+[checkers](https://github.com/ImparaAI/checkers) Python library (MIT), and the
+evaluation on [almostimplemented/checkers](https://github.com/almostimplemented/checkers)
+(Apache 2.0).
 
 ## License
 
-This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.
+GPL-3.0 — see [LICENSE](LICENSE).

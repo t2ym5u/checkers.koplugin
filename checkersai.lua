@@ -17,7 +17,7 @@ CheckersAI.__index = CheckersAI
 
 -- ── Time budget ──────────────────────────────────────────────────────────────
 -- Seconds of thinking per move, keyed by the preset depth (see
--- checkerssettings.lua). Tuned for a Kobo-class 1 GHz single-core device.
+-- DIFF_DEPTH in screen.lua). Tuned for a Kobo-class 1 GHz single-core device.
 CheckersAI.BUDGET = {
     [3] = 0.5,   -- Easy   (always reaches depth 3 well within this)
     [5] = 1.0,   -- Medium
