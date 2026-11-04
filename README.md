@@ -47,12 +47,16 @@ You can reopen the settings at any time using the **⚙ gear icon** in the top-l
 
 ### Difficulty levels
 
-| Level  | Search depth | Notes |
+| Level  | Max search depth | Notes |
 |--------|-------------|-------|
 | Easy   | 3 | Misses short-term threats |
 | Medium | 5 | Plays solid, misses some tactics |
 | Hard   | 7 | Strong club-level play |
-| Expert | 9 | May think for several seconds per move |
+| Expert | 9 | Strongest; thinks up to ~2.5 s per move |
+
+The search deepens iteratively and stops at the level's depth or its time
+budget (Easy 0.5 s, Medium 1 s, Hard 2 s, Expert 2.5 s on a Kobo-class device),
+whichever comes first.
 
 ## Rules summary (English draughts)
 
