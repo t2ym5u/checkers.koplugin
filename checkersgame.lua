@@ -260,46 +260,61 @@ local function perform_positional(board, move)
     board.player_turn = board.player_turn == 1 and 2 or 1
 end
 
--- ── Snapshot (undo) ──────────────────────────────────────────────────────────
+-- ── Snapshot (undo, save) ────────────────────────────────────────────────────
+-- A position is a compact string, so the undo history stays small enough to
+-- be saved with the game:
+--   32 cells ('.' empty, 'b'/'B' black man/king, 'w'/'W' white man/king)
+--   ":" side to move ":" mid-jump square (0 = none)
+--   ":" moves since the last capture ":" previous move was a capture (0/1)
+
+local CELL_CODE = { [1] = { "b", "B" }, [2] = { "w", "W" } }
+local CODE_PIECE = {
+    b = { 1, false }, B = { 1, true }, w = { 2, false }, W = { 2, true },
+}
+local SNAPSHOT_PATTERN = "^([%.bBwW]+):([12]):(%d+):(%d+):([01])$"
 
 local function take_snapshot(board, moves_since)
-    local pdata = {}
+    local cells = {}
+    for pos = 1, board.position_count do cells[pos] = "." end
     for _, p in ipairs(board.pieces) do
-        pdata[p.id] = {
-            player   = p.player,
-            king     = p.king,
-            captured = p.captured,
-            position = p.position,
-        }
+        if not p.captured and p.position then
+            cells[p.position] = CELL_CODE[p.player][p.king and 2 or 1]
+        end
     end
-    return {
-        piece_data              = pdata,
-        player_turn             = board.player_turn,
-        previous_move_capture   = board.previous_move_was_capture,
-        piece_requiring_pos     = board.piece_requiring_further_capture_moves
-                                  and board.piece_requiring_further_capture_moves.position or nil,
-        moves_since_last_capture = moves_since,
-    }
+    local mid = board.piece_requiring_further_capture_moves
+    return table.concat(cells) .. ":" .. board.player_turn
+        .. ":" .. (mid and mid.position or 0)
+        .. ":" .. (moves_since or 0)
+        .. ":" .. (board.previous_move_was_capture and 1 or 0)
 end
 
+local function valid_snapshot(snap)
+    if type(snap) ~= "string" then return false end
+    local cells = snap:match(SNAPSHOT_PATTERN)
+    return cells ~= nil and #cells == 32
+end
+
+-- Rebuilds the board's pieces from a snapshot; returns the moves since the
+-- last capture it holds.
 local function restore_snapshot(board, snap)
-    for _, p in ipairs(board.pieces) do
-        local d = snap.piece_data[p.id]
-        p.player       = d.player
-        p.other_player = d.player == 1 and 2 or 1
-        p.king         = d.king
-        p.captured     = d.captured
-        p.position     = d.position
+    local cells, turn, mid, msc, cap = snap:match(SNAPSHOT_PATTERN)
+    local pieces = {}
+    for pos = 1, #cells do
+        local code = CODE_PIECE[cells:sub(pos, pos)]
+        if code then
+            local p = new_piece(#pieces + 1, code[1], pos)
+            p.king = code[2]
+            pieces[#pieces + 1] = p
+        end
     end
-    board.player_turn               = snap.player_turn
-    board.previous_move_was_capture = snap.previous_move_capture
+    board.pieces                    = pieces
+    board.player_turn               = tonumber(turn)
+    board.previous_move_was_capture = cap == "1"
     rebuild(board)
-    if snap.piece_requiring_pos then
-        board.piece_requiring_further_capture_moves =
-            board.searcher.position_pieces[snap.piece_requiring_pos]
-    else
-        board.piece_requiring_further_capture_moves = nil
-    end
+    local p = board.searcher.position_pieces[tonumber(mid)]
+    board.piece_requiring_further_capture_moves =
+        (p and p.player == board.player_turn) and p or nil
+    return tonumber(msc)
 end
 
 -- ── Board initializer ────────────────────────────────────────────────────────
@@ -382,6 +397,7 @@ end
 function CheckersGame:move(from_pos, to_pos)
     local move = {from_pos, to_pos}
     if not move_in_list(move, possible_moves(self.board)) then return false end
+    local continuing = self:is_mid_jump()
     self.history[#self.history+1] = take_snapshot(self.board, self.moves_since_last_capture)
     local is_cap = move_in_list(move, all_capture_moves(self.board))
     if is_cap then
@@ -391,17 +407,24 @@ function CheckersGame:move(from_pos, to_pos)
         perform_positional(self.board, move)
         self.moves_since_last_capture = self.moves_since_last_capture + 1
     end
+    -- The squares the moving piece went through this turn (for display).
+    if continuing and self.last_path then
+        self.last_path[#self.last_path+1] = to_pos
+    else
+        self.last_path = {from_pos, to_pos}
+    end
     return true
 end
 
 -- Undo one full turn (collapses multi-jump sub-moves into one undo step).
+-- In the middle of a multi-jump it goes back to the start of that turn.
 function CheckersGame:undo()
-    if #self.history == 0 or self:is_mid_jump() then return false end
+    if #self.history == 0 then return false end
     repeat
         local snap = table.remove(self.history)
-        self.moves_since_last_capture = snap.moves_since_last_capture
-        restore_snapshot(self.board, snap)
+        self.moves_since_last_capture = restore_snapshot(self.board, snap)
     until (not self:is_mid_jump()) or (#self.history == 0)
+    self.last_path = nil
     return true
 end
 
@@ -410,7 +433,7 @@ function CheckersGame:is_over()
         or #possible_moves(self.board) == 0
 end
 
--- Returns 1 or 2 if that player wins, nil if game is ongoing.
+-- Returns 1 or 2 if that player wins, nil if game is ongoing or drawn.
 function CheckersGame:get_winner()
     if #possible_moves(self.board) == 0 then
         return self.board.player_turn == 1 and 2 or 1
@@ -438,7 +461,101 @@ function CheckersGame:get_mid_jump_piece_pos()
 end
 
 function CheckersGame:can_undo()
-    return #self.history > 0 and not self:is_mid_jump()
+    return #self.history > 0
+end
+
+-- True when the side to move has a capture, which is then compulsory.
+function CheckersGame:must_capture()
+    return #all_capture_moves(self.board) > 0
+end
+
+-- Number of pieces player (1 or 2) still has on the board.
+function CheckersGame:count(player)
+    return #self.board.searcher.player_pieces[player]
+end
+
+-- nil while the game goes on, otherwise { winner = 1|2|nil, reason = ... }:
+--   "no_pieces" — the loser has no pieces left
+--   "blocked"   — the loser still has pieces but no legal move
+--   "quiet"     — draw, too many moves in a row without a capture
+function CheckersGame:result()
+    if #possible_moves(self.board) == 0 then
+        local loser = self.board.player_turn
+        return {
+            winner = loser == 1 and 2 or 1,
+            reason = self:count(loser) == 0 and "no_pieces" or "blocked",
+        }
+    end
+    if self.moves_since_last_capture >= self.consecutive_noncapture_limit then
+        return { winner = nil, reason = "quiet" }
+    end
+    return nil
+end
+
+-- ── Save / load ──────────────────────────────────────────────────────────────
+
+function CheckersGame:serialize()
+    local path
+    if self.last_path then
+        path = {}
+        for i, pos in ipairs(self.last_path) do path[i] = pos end
+    end
+    local history = {}
+    for i, snap in ipairs(self.history) do history[i] = snap end
+    return {
+        version   = 1,
+        position  = take_snapshot(self.board, self.moves_since_last_capture),
+        history   = history,
+        last_path = path,
+    }
+end
+
+-- Returns a game rebuilt from serialize()'s table, or nil if data is not one.
+function CheckersGame.load(data)
+    if type(data) ~= "table" or data.version ~= 1
+            or not valid_snapshot(data.position) then
+        return nil
+    end
+    local self = CheckersGame.new()
+    self.moves_since_last_capture = restore_snapshot(self.board, data.position)
+    if type(data.history) == "table" then
+        for _, snap in ipairs(data.history) do
+            if not valid_snapshot(snap) then
+                self.history = {}
+                break
+            end
+            self.history[#self.history+1] = snap
+        end
+    end
+    if type(data.last_path) == "table" then
+        local path = {}
+        for _, pos in ipairs(data.last_path) do
+            if type(pos) == "number" and pos >= 1 and pos <= 32 then
+                path[#path+1] = pos
+            end
+        end
+        if #path >= 2 then self.last_path = path end
+    end
+    return self
+end
+
+-- ── Board geometry ───────────────────────────────────────────────────────────
+-- Squares 1-32 seen from Black's side (Black at the bottom): row 1 is the top
+-- of the screen, column 1 the left. Square 1-4 is Black's back row (row 8);
+-- the dark squares are those where row + column is odd.
+
+function CheckersGame.pos_to_rc(pos)
+    local lrow = math.floor((pos - 1) / 4)            -- 0..7, Black's home = 0
+    local lcol = (pos - 1) % 4
+    local file = (lrow % 2 == 0) and (lcol * 2 + 1) or (lcol * 2)
+    return 8 - lrow, 8 - file
+end
+
+function CheckersGame.rc_to_pos(r, c)
+    if r < 1 or r > 8 or c < 1 or c > 8 or (r + c) % 2 == 0 then return nil end
+    local lrow = 8 - r
+    local file = 8 - c
+    return lrow * 4 + math.floor(file / 2) + 1
 end
 
 -- Clone the game state for AI search (no history needed in the clone).
