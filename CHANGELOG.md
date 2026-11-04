@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 Releases before 1.2.0 were made by the original author (kbarni); this
 repository is a fork of https://github.com/kbarni/checkers.koplugin.
 
+## [1.3.1] - 2026-11-04
+
+### Changed
+- Uses less memory: the game loads when you open it, not when KOReader
+  starts, so it no longer takes memory or startup time while unplayed.
+
 ## [1.3.0] - 2026-11-04
 
 ### Changed
