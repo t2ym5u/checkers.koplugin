@@ -58,10 +58,9 @@ Chaque joueur a 12 pions sur les cases foncées. Les Noirs commencent.
 Vous gagnez quand l'adversaire n'a plus de pions ou ne peut plus bouger. Après 40 coups d'affilée sans prise (20 chacun), la partie est nulle.
 ]]
 
--- Difficulty -> maximum search depth. The thinking time per level is
--- CheckersAI.BUDGET (Easy 0.5 s ... Expert 2.5 s on a Kobo-class reader).
+-- Difficulty levels (depth, thinking time, noise): CheckersAI.LEVELS
+-- (Easy 0.5 s ... Expert 2.3 s on a Kobo-class reader).
 local DIFF_ORDER = { "easy", "medium", "hard", "expert" }
-local DIFF_DEPTH = { easy = 3, medium = 5, hard = 7, expert = 9 }
 local DIFF_LABELS = {
     easy   = MenuHelper.DIFFICULTY_LABELS.easy,
     medium = MenuHelper.DIFFICULTY_LABELS.medium,
@@ -174,7 +173,7 @@ end
 
 function CheckersScreen:_difficulty()
     local d = self.plugin:getSetting("difficulty", "medium")
-    return DIFF_DEPTH[d] and d or "medium"
+    return CheckersAI.LEVELS[d] and d or "medium"
 end
 
 -- Against the AI the human's pieces are at the bottom.
@@ -298,7 +297,7 @@ function CheckersScreen:triggerAI()
     self.selected = nil
     self.board_widget:refresh()
     self:updateStatus(_("AI is thinking..."))
-    local depth = DIFF_DEPTH[self:_difficulty()]
+    local level = CheckersAI.LEVELS[self:_difficulty()]
     UIManager:scheduleIn(0.05, function()
         self.ai_pending = false
         if self.closed or not self:_isAITurn() then return end
@@ -306,7 +305,7 @@ function CheckersScreen:triggerAI()
         local side = game:whose_turn()
         -- A multi-jump is several moves of the same turn.
         repeat
-            local m = CheckersAI.best_move(game, depth)
+            local m = CheckersAI.best_move(game, level.depth, level.budget, level)
             if not m then break end
             game:move(m[1], m[2])
         until not game:is_mid_jump() or game:whose_turn() ~= side

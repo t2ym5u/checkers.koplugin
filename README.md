@@ -44,9 +44,11 @@ in a row without a capture (20 each), the game is drawn.
 Iterative-deepening negamax with alpha-beta pruning on a compact board, with
 a transposition table and killer/history move ordering. The evaluation follows
 Arthur Samuel's checkers features (material, advancement, centre control,
-back-row bridge). Each level searches up to a maximum depth (3, 5, 7, 9) within
-a thinking-time budget (0.5 s, 1 s, 2 s, 2.5 s of CPU time on a Kobo-class
-reader), whichever comes first.
+back-row bridge). Each level searches up to a maximum depth (1, 4, 6, 9) within
+a thinking-time budget (0.5 s, 1 s, 2 s, 2.3 s of CPU time on a Kobo-class
+reader), whichever comes first. Easy and Medium add a random bonus to each
+move's score before choosing, so they make human-sized mistakes and do not
+play the same game twice; Hard and Expert always play their best move.
 
 ## Installation
 

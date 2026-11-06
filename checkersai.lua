@@ -10,7 +10,8 @@
 -- The preset depth is kept as the maximum depth.
 --
 -- Public API:
---   CheckersAI.best_move(game, depth)  →  {from_pos, to_pos} or nil
+--   CheckersAI.best_move(game, depth[, budget[, opts]])  →  {from_pos, to_pos} or nil
+--   CheckersAI.LEVELS[id]  →  { depth, budget, noise } per difficulty
 
 local CheckersAI = {}
 CheckersAI.__index = CheckersAI
@@ -18,13 +19,32 @@ CheckersAI.__index = CheckersAI
 -- ── Time budget ──────────────────────────────────────────────────────────────
 -- Seconds of thinking per move, keyed by the preset depth (see
 -- DIFF_DEPTH in screen.lua). Tuned for a Kobo-class 1 GHz single-core device.
+-- (Used when best_move gets no explicit budget.)
 CheckersAI.BUDGET = {
-    [3] = 0.5,   -- Easy   (always reaches depth 3 well within this)
+    [3] = 0.5,   -- Easy   (always reaches its depth well within this)
     [5] = 1.0,   -- Medium
     [7] = 2.0,   -- Hard
-    [9] = 2.5,   -- Expert
+    [9] = 2.3,   -- Expert (the clock is read every 1024 nodes: stays < 2.5 s)
 }
-CheckersAI.DEFAULT_BUDGET = 2.5
+CheckersAI.DEFAULT_BUDGET = 2.3
+
+-- Difficulty levels.
+-- depth:  deepest iteration of the search.
+-- budget: thinking time in seconds on the e-reader.
+-- noise:  a random bonus in [0, noise) added to each move's score before
+--         choosing (a man is worth 100), so a level does not answer a line
+--         the same way every game and Easy makes human-sized mistakes.
+--         Forced wins and losses (10000) are far beyond it.
+-- Measured (Kobo-scaled budgets, randomised openings): Easy scores about
+-- 40% against a 1-ply greedy player (many draws), each level 68-98% against
+-- the one below. Hard is depth 6, not 7: at 7 it came too close to Expert,
+-- whose 2.3 s rarely reach depth 9.
+CheckersAI.LEVELS = {
+    easy   = { depth = 1, budget = 0.5, noise = 20 },
+    medium = { depth = 4, budget = 1.0, noise = 10 },
+    hard   = { depth = 6, budget = 2.0, noise = 0 },
+    expert = { depth = 9, budget = 2.3, noise = 0 },
+}
 -- Multiplier applied to every budget (test harnesses lower it to simulate a
 -- slower device on a fast machine).
 CheckersAI.time_scale = 1
@@ -427,8 +447,12 @@ CheckersAI.last_nodes = 0
 -- depth is the maximum search depth (defaults to 5); the search deepens
 -- iteratively until that depth or the level's time budget is reached.
 -- The returned move is always one of game:get_possible_moves().
-function CheckersAI.best_move(game, depth, budget)
+-- opts: optional { noise, rng } (see LEVELS; rng defaults to math.random).
+function CheckersAI.best_move(game, depth, budget, opts)
     depth = depth or 5
+    local noise = opts and opts.noise or 0
+    local rng = opts and opts.rng or math.random
+    local exact = noise > 0
     local legal = game:get_possible_moves()
     CheckersAI.last_depth, CheckersAI.last_nodes = 0, 0
     if #legal == 0 then return nil  end
@@ -444,14 +468,19 @@ function CheckersAI.best_move(game, depth, budget)
     local root = {}
     for i = 1, n do root[i] = MOVES[1][i] end
     local best_move = root[1]
+    local final_scores   -- root scores of the last full iteration
 
     for d = 1, depth do
         local alpha, beta = -INF, INF
         local iter_best, iter_val = nil, -INF
+        local scores = {}
         for i = 1, #root do
             local m = root[i]
-            local val = search_child(m, d, alpha, beta, 1)
+            -- With noise, every move that could still be picked once a bonus
+            -- below `noise` is added needs its true score, not a bound.
+            local val = search_child(m, d, exact and iter_val - noise or alpha, beta, 1)
             if aborted then break end
+            scores[m] = val
             if val > iter_val then
                 iter_val, iter_best = val, m
                 if val > alpha then alpha = val end
@@ -460,10 +489,11 @@ function CheckersAI.best_move(game, depth, budget)
         if aborted then
             -- A partial iteration still searched the previous best move
             -- first; any move that beat it is a genuine improvement.
-            if iter_best and iter_best ~= root[1] then best_move = iter_best end
+            if not exact and iter_best and iter_best ~= root[1] then best_move = iter_best end
             break
         end
         best_move = iter_best
+        final_scores = scores
         CheckersAI.last_depth = d
         CheckersAI.last_value = iter_val
         -- Previous best move first in the next iteration.
@@ -476,6 +506,16 @@ function CheckersAI.best_move(game, depth, budget)
         if iter_val >= WIN - 200 or iter_val <= -(WIN - 200) then break end  -- forced result found
     end
     CheckersAI.last_nodes = nodes
+
+    -- Noise: the move with the best score plus a random bonus.
+    if exact and final_scores then
+        local best_v = -INF
+        for i = 1, #root do
+            local m = root[i]
+            local v = final_scores[m] + rng() * noise
+            if v > best_v then best_v, best_move = v, m end
+        end
+    end
 
     local f = floor(best_move / 64)
     local t = best_move - f * 64

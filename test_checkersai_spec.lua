@@ -95,6 +95,71 @@ describe("CheckersAI", function()
         assert.is_true(is_legal(g, m))
     end)
 
+    describe("difficulty levels", function()
+        local function aiMove(g, id)
+            local L = CheckersAI.LEVELS[id]
+            return CheckersAI.best_move(g, L.depth, L.budget, L)
+        end
+
+        -- A whole game (capped), every move from `id`, the rng seeded.
+        local function playGame(id, seed)
+            math.randomseed(seed)
+            local g = CheckersGame.new()
+            local out = {}
+            for _ = 1, 80 do
+                if g:is_over() then break end
+                local m = aiMove(g, id)
+                assert.is_true(is_legal(g, m))
+                out[#out + 1] = m[1] .. "-" .. m[2]
+                g:move(m[1], m[2])
+            end
+            return table.concat(out, ",")
+        end
+
+        it("gets weaker from Expert to Easy", function()
+            local L = CheckersAI.LEVELS
+            local ids = { "easy", "medium", "hard", "expert" }
+            for i = 2, #ids do
+                assert.is_true(L[ids[i - 1]].depth < L[ids[i]].depth)
+                assert.is_true(L[ids[i - 1]].noise >= L[ids[i]].noise)
+            end
+            assert.is_true(L.easy.noise > L.medium.noise and L.medium.noise > 0)
+            assert.are.equal(0, L.hard.noise)
+            assert.are.equal(0, L.expert.noise)
+            for _, id in ipairs(ids) do assert.is_true(L[id].budget <= 2.3) end
+        end)
+
+        it("Easy and Medium play legal moves in random positions", function()
+            CheckersAI.time_scale = 0.05
+            for _, g in ipairs(random_positions(20, 23)) do
+                for _, id in ipairs({ "easy", "medium" }) do
+                    local m = aiMove(g, id)
+                    assert.is_truthy(m)
+                    assert.is_true(is_legal(g, m))
+                end
+            end
+        end)
+
+        it("Easy varies between games and is the same under one seed", function()
+            local seen, distinct = {}, 0
+            for seed = 1, 4 do
+                local s = playGame("easy", seed)
+                if not seen[s] then seen[s] = true; distinct = distinct + 1 end
+            end
+            assert.is_true(distinct >= 2, "Easy played the same game every time")
+            assert.are.equal(playGame("easy", 42), playGame("easy", 42))
+        end)
+
+        it("noise uses the given rng", function()
+            for _, g in ipairs(random_positions(10, 29)) do
+                local plain = CheckersAI.best_move(g, 3, 100)
+                local zero = CheckersAI.best_move(g, 3, 100,
+                    { noise = 1000, rng = function() return 0 end })
+                assert.are.same(plain, zero)
+            end
+        end)
+    end)
+
     it("stays within the Expert time budget (generous bound)", function()
         -- 2.5 s on the device; scaled down here, plus slack for one node batch.
         CheckersAI.time_scale = 0.04
