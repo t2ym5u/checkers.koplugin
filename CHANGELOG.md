@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 Releases before 1.2.0 were made by the original author (kbarni); this
 repository is a fork of https://github.com/kbarni/checkers.koplugin.
 
+## [1.4.0] - 2026-11-05
+
+### Changed
+- Easy is really easy now: it looks one move ahead with a little variety
+  instead of three moves ahead, so it can leave a piece hanging. Measured,
+  it now scores a bit under half against a player who just takes the
+  best-looking move (it scored 98% before).
+- Easy and Medium no longer play the same game twice: a line that beat
+  them once will not win every time.
+- The levels are now evenly spaced: Medium looks four moves ahead instead
+  of five and Hard six instead of seven, so Expert clearly beats Hard
+  (about 78% of the points instead of 67%) while Hard still beats Medium
+  (about 68%).
+- Expert's thinking time is 2.3 s instead of 2.5 s, so its slowest move
+  stays under 2.5 s on an e-reader (it reached 2.6 s).
+
 ## [1.3.2] - 2026-11-04
 
 ### Fixed
