@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 Releases before 1.2.0 were made by the original author (kbarni); this
 repository is a fork of https://github.com/kbarni/checkers.koplugin.
 
+## [1.4.1] - 2026-11-12
+
+### Changed
+- Picks up game-common 1.16.0: games for two readers (new Two readers
+  category) and the shared Start / Join dialog.
+
 ## [1.4.0] - 2026-11-05
 
 ### Changed
