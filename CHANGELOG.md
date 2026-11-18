@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 Releases before 1.2.0 were made by the original author (kbarni); this
 repository is a fork of https://github.com/kbarni/checkers.koplugin.
 
+## [1.4.2] - 2026-11-18
+
+### Changed
+- Picks up game-common 1.17.0 (a board redraw fix used by chess, binairo and
+  tatami; no change in this game).
+
 ## [1.4.1] - 2026-11-12
 
 ### Changed
