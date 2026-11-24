@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 Releases before 1.2.0 were made by the original author (kbarni); this
 repository is a fork of https://github.com/kbarni/checkers.koplugin.
 
+## [1.4.5] - 2026-11-24
+
+### Changed
+- Picks up game-common 1.20.0: a deferred action (timer tick, computer's
+  move, card flip) no longer runs once the game is closed or a new game has
+  started, and the game is saved a few seconds after a move instead of after
+  every one, and at once on close, suspend or power-off.
+
 ## [1.4.4] - 2026-11-24
 
 ### Changed

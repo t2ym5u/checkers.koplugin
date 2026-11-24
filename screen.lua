@@ -79,7 +79,7 @@ function CheckersScreen:init()
     self.selected = nil
     ScreenBase.init(self)  -- calls buildLayout()
     if self:_isAITurn() then
-        UIManager:scheduleIn(0.1, function() self:triggerAI() end)
+        self:schedule(0.1, function() self:triggerAI() end)
     end
 end
 
@@ -298,7 +298,7 @@ function CheckersScreen:triggerAI()
     self.board_widget:refresh()
     self:updateStatus(_("AI is thinking..."))
     local level = CheckersAI.LEVELS[self:_difficulty()]
-    UIManager:scheduleIn(0.05, function()
+    self:schedule(0.05, function()
         self.ai_pending = false
         if self.closed or not self:_isAITurn() then return end
         local game = self.game
@@ -340,13 +340,15 @@ function CheckersScreen:onUndo()
 end
 
 function CheckersScreen:onNewGame()
+    self:cancelScheduled()  -- an AI move still pending belongs to the old game
+    self.ai_pending = false
     self.game = CheckersGame.new()
     self.selected = nil
     self.plugin:saveState(self:serializeState())
     self:buildLayout()
     UIManager:setDirty(self, function() return "ui", self.dimen end)
     if self:_isAITurn() then
-        UIManager:scheduleIn(0.1, function() self:triggerAI() end)
+        self:schedule(0.1, function() self:triggerAI() end)
     end
 end
 
