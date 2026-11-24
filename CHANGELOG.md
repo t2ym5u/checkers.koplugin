@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 Releases before 1.2.0 were made by the original author (kbarni); this
 repository is a fork of https://github.com/kbarni/checkers.koplugin.
 
+## [1.4.4] - 2026-11-24
+
+### Changed
+- Picks up game-common 1.19.0: with the Dashboard installed, the title bar's
+  close icon becomes a house that goes back to it.
+
 ## [1.4.3] - 2026-11-24
 
 ### Changed
