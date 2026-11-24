@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 Releases before 1.2.0 were made by the original author (kbarni); this
 repository is a fork of https://github.com/kbarni/checkers.koplugin.
 
+## [1.4.3] - 2026-11-24
+
+### Changed
+- Picks up game-common 1.18.0: a status line cut off with "…" opens in full
+  when tapped, so a long hint can be read.
+
 ## [1.4.2] - 2026-11-18
 
 ### Changed
